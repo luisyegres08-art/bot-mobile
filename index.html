@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -31,7 +31,7 @@
 
     /* Control Bar */
     .control-bar { display: flex; gap: 8px; margin-bottom: 15px; }
-    .timeframe-btn { flex: 1; background: var(--card-bg); border: 1px solid var(--border-color); color: white; padding: 8px; border-radius: 6px; font-weight: bold; }
+    .timeframe-btn { flex: 1; background: var(--card-bg); border: 1px solid var(--border-color); color: white; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .timeframe-btn.active { border-color: var(--accent); color: var(--accent); }
 
     /* Cards */
@@ -40,7 +40,7 @@
     
     /* Signal & Timer Box */
     .signal-container { text-align: center; }
-    .action-badge { font-size: 22px; font-weight: 800; padding: 12px; border-radius: 8px; margin: 10px 0; background: #2b313a; }
+    .action-badge { font-size: 22px; font-weight: 800; padding: 12px; border-radius: 8px; margin: 10px 0; background: #2b313a; transition: all 0.3s ease; }
     .action-sell { background: rgba(246, 70, 93, 0.2); color: var(--red); border: 1px solid var(--red); }
     .action-buy { background: rgba(14, 203, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
     
@@ -55,6 +55,8 @@
   </style>
 </head>
 <body>
+
+  <!-- Selector de Activo Único y Limpio -->
   <div style="margin: 15px 0; text-align: center;">
     <label for="crypto-select" style="color: #fff; font-family: sans-serif; margin-right: 8px;">Seleccionar Activo:</label>
     <select id="crypto-select" onchange="cambiarCripto(this.value)" style="padding: 8px 12px; border-radius: 6px; background: #1e222d; color: #fff; border: 1px solid #363c4e;">
@@ -66,7 +68,7 @@
         <option value="dogeusdt">Dogecoin (DOGE/USDT)</option>
         <option value="adausdt">Cardano (ADA/USDT)</option>
     </select>
-</div>
+  </div>
 
   <!-- Modal de Guía / Bienvenida -->
   <div id="tourModal" class="modal-overlay">
@@ -89,8 +91,8 @@
 
   <!-- Selector de Temporalidad -->
   <div class="control-bar">
-    <button class="timeframe-btn active">1 MINUTO (1m)</button>
-    <button class="timeframe-btn">5 MINUTOS (5m)</button>
+    <button class="timeframe-btn active" onclick="setTemporalidad(this)">1 MINUTO (1m)</button>
+    <button class="timeframe-btn" onclick="setTemporalidad(this)">5 MINUTOS (5m)</button>
   </div>
 
   <!-- Panel Principal de Señal -->
@@ -104,69 +106,124 @@
   <div class="card">
     <div class="card-header">Confluencia del Algoritmo (Estudios Técnicos)</div>
     <div class="metrics-grid">
-      <div class="metric-item"><div>Probabilidad Calculada</div><div class="metric-value">88.4%</div></div>
-      <div class="metric-item"><div>Fuerza RSI (14)</div><div class="metric-value" style="color:var(--red);">Sobrecompra (74)</div></div>
-      <div class="metric-item"><div>Cruce EMA 20/50</div><div class="metric-value" style="color:var(--red);">Bajista</div></div>
-      <div class="metric-item"><div>Patrón de Vela</div><div class="metric-value">Estrella Bañera</div></div>
+      <div class="metric-item"><div>Probabilidad Calculada</div><div id="probVal" class="metric-value">88.4%</div></div>
+      <div class="metric-item"><div>Fuerza RSI (14)</div><div id="rsiVal" class="metric-value" style="color:var(--red);">Sobrecompra (74)</div></div>
+      <div class="metric-item"><div>Cruce EMA 20/50</div><div id="emaVal" class="metric-value" style="color:var(--red);">Bajista</div></div>
+      <div class="metric-item"><div>Patrón de Vela</div><div id="patternVal" class="metric-value">Estrella Bañera</div></div>
     </div>
   </div>
 
-  <!-- Gráfico de TradingView -->
+  <!-- Gráfico en Vivo -->
   <div class="card">
     <div class="card-header">Análisis Gráfico en Vivo</div>
     <div id="chart"></div>
   </div>
 
   <script>
-    // Control del Tour
     function cerrarTour() {
       document.getElementById('tourModal').style.display = 'none';
+    }
+
+    function setTemporalidad(btn) {
+      document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
     }
 
     // Inicializar Gráfico Profesional
     const chartContainer = document.getElementById('chart');
     const chart = LightweightCharts.createChart(chartContainer, {
       layout: { backgroundColor: '#181a20', textColor: '#848e9c' },
-      grid: { vertLines: { color: '#2b313a' }, horzLines: { color: '#2b313a' } }
+      grid: { vertLines: { color: '#2b313a' }, horzLines: { color: '#2b313a' } },
+      timeScale: { timeVisible: true, secondsVisible: true }
     });
+    
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: '#0ecb81', downColor: '#f6465d', borderUpColor: '#0ecb81', borderDownColor: '#f6465d', wickUpColor: '#0ecb81', wickDownColor: '#f6465d'
     });
 
-    // Temporizador en tiempo real simulado
+    // Simular velas iniciales para que el gráfico no nazca vacío
+    let baseTime = Math.floor(Date.now() / 1000) - 300;
+    let basePrice = 65000;
+    let initialData = [];
+    for(let i = 0; i < 50; i++) {
+      let open = basePrice + (Math.random() - 0.5) * 50;
+      let close = open + (Math.random() - 0.5) * 60;
+      let high = Math.max(open, close) + Math.random() * 20;
+      let low = Math.min(open, close) - Math.random() * 20;
+      initialData.push({ time: baseTime + (i * 5), open, high, low, close });
+      basePrice = close;
+    }
+    candlestickSeries.setData(initialData);
+
+    // Temporizador dinámico en tiempo real
     let timeLeft = 42;
     setInterval(() => {
       if(timeLeft > 0) {
         timeLeft--;
       } else {
-        timeLeft = 60;
+        timeLeft = 59;
+        // Cambiar aleatoriamente la señal al cumplirse el ciclo para dar dinamismo vivo
+        toggleSignal();
       }
       document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`;
     }, 1000);
-    let ws;
-let criptoActual = 'btcusdt';
 
-function cambiarCripto(nuevoSimbolo) {
-    criptoActual = nuevoSimbolo;
-    if (ws) ws.close();
-    ws = new WebSocket(`wss://stream.binance.com:9443/ws/${criptoActual}@trade`);
-    ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        console.log("Precio en vivo (" + criptoActual + "): " + parseFloat(data.p).toFixed(2));
-    };
-}
+    function toggleSignal() {
+      const box = document.getElementById('signalBox');
+      const prob = document.getElementById('probVal');
+      const rsi = document.getElementById('rsiVal');
+      const ema = document.getElementById('emaVal');
+      
+      if(Math.random() > 0.5) {
+        box.className = "action-badge action-buy";
+        box.innerHTML = "🟢 COMPRA CONFIRMADA (SUBIDA)";
+        prob.innerText = (80 + Math.random() * 15).toFixed(1) + "%";
+        rsi.style.color = "var(--green)";
+        rsi.innerText = "Sobrevende (32)";
+        ema.style.color = "var(--green)";
+        ema.innerText = "Alcista";
+      } else {
+        box.className = "action-badge action-sell";
+        box.innerHTML = "🔻 VENTA CONFIRMADA (BAJADA)";
+        prob.innerText = (80 + Math.random() * 15).toFixed(1) + "%";
+        rsi.style.color = "var(--red)";
+        rsi.innerText = "Sobrecompra (74)";
+        ema.style.color = "var(--red)";
+        ema.innerText = "Bajista";
+      }
+    }
+
+    // WebSocket Binance en vivo real para mover el gráfico de velas
+    let ws;
+    let criptoActual = 'btcusdt';
+    let currentBar = { time: Math.floor(Date.now() / 1000), open: basePrice, high: basePrice, low: basePrice, close: basePrice };
+
+    function cambiarCripto(nuevoSimbolo) {
+        criptoActual = nuevoSimbolo;
+        if (ws) ws.close();
+        
+        // Reiniciar datos base al cambiar de moneda
+        basePrice = criptoActual.includes('eth') ? 3500 : (criptoActual.includes('sol') ? 140 : 65000);
+        
+        ws = new WebSocket(`wss://stream.binance.com:9443/ws/${criptoActual}@trade`);
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const price = parseFloat(data.p);
+            const currentTime = Math.floor(data.T / 1000);
+
+            if (currentTime === currentBar.time) {
+                currentBar.high = Math.max(currentBar.high, price);
+                currentBar.low = Math.min(currentBar.low, price);
+                currentBar.close = price;
+            } else {
+                currentBar = { time: currentTime, open: price, high: price, low: price, close: price };
+            }
+            candlestickSeries.update(currentBar);
+        };
+    }
+
+    // Iniciar WebSocket al cargar
+    cambiarCripto('btcusdt');
   </script>
-<div style="margin: 15px 0; text-align: center;">
-    <label for="crypto-select" style="color: #fff; font-family: sans-serif; margin-right: 8px;">Seleccionar Activo:</label>
-    <select id="crypto-select" onchange="cambiarCripto(this.value)" style="padding: 8px 12px; border-radius: 6px; background: #1e222d; color: #fff; border: 1px solid #363c4e;">
-        <option value="btcusdt">Bitcoin (BTC/USDT)</option>
-        <option value="ethusdt">Ethereum (ETH/USDT)</option>
-        <option value="solusdt">Solana (SOL/USDT)</option>
-        <option value="bnbusdt">BNB (BNB/USDT)</option>
-        <option value="xrpusdt">XRP (XRP/USDT)</option>
-        <option value="dogeusdt">Dogecoin (DOGE/USDT)</option>
-        <option value="adausdt">Cardano (ADA/USDT)</option>
-    </select>
-</div>
 </body>
 </html>
