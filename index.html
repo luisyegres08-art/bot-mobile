@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Predictive Engine - Trading Panel</title>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    :root {
+      --bg-color: #0b0e14;
+      --card-bg: #181a20;
+      --border-color: #2b313a;
+      --green: #0ecb81;
+      --red: #f6465d;
+      --accent: #f0b90b;
+      --text-muted: #848e9c;
+    }
+    body { background-color: var(--bg-color); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 12px; margin: 0; }
+    
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+    .brand { font-size: 16px; font-weight: bold; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+    
+    /* Tour Overlay Modal */
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 999; padding: 20px; box-sizing: border-box; }
+    .modal-card { background: var(--card-bg); border: 1px solid var(--accent); border-radius: 12px; padding: 20px; max-width: 400px; text-align: center; }
+    .modal-card h3 { color: var(--accent); margin-top: 0; }
+    .modal-card p { font-size: 14px; color: #d1d4dc; line-height: 1.5; }
+    .btn { background: var(--accent); color: #000; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    .btn-skip { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); margin-left: 8px; }
+
+    /* Control Bar */
+    .control-bar { display: flex; gap: 8px; margin-bottom: 15px; }
+    .timeframe-btn { flex: 1; background: var(--card-bg); border: 1px solid var(--border-color); color: white; padding: 8px; border-radius: 6px; font-weight: bold; }
+    .timeframe-btn.active { border-color: var(--accent); color: var(--accent); }
+
+    /* Cards */
+    .card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border-color); }
+    .card-header { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+    
+    /* Signal & Timer Box */
+    .signal-container { text-align: center; }
+    .action-badge { font-size: 22px; font-weight: 800; padding: 12px; border-radius: 8px; margin: 10px 0; background: #2b313a; }
+    .action-sell { background: rgba(246, 70, 93, 0.2); color: var(--red); border: 1px solid var(--red); }
+    .action-buy { background: rgba(14, 203, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
+    
+    .timer-display { font-size: 14px; color: var(--accent); font-weight: bold; }
+
+    /* Indicator Meter */
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; font-size: 12px; }
+    .metric-item { background: #0b0e14; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); text-align: center; }
+    .metric-value { font-weight: bold; color: var(--green); margin-top: 4px; }
+
+    #chart { width: 100%; height: 300px; }
+  </style>
+</head>
+<body>
+
+  <!-- Modal de Guía / Bienvenida -->
+  <div id="tourModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3>🚀 Quantum AI Trading Engine</h3>
+      <p>Bienvenido al panel analítico personal. El sistema procesa patrones de acción de precio e indicadores técnicos en tiempo real.</p>
+      <p><strong>Paso 1:</strong> Selecciona la temporalidad (1m o 5m).<br>
+         <strong>Paso 2:</strong> Espera la alerta de dirección (COMPRA/VENTA).<br>
+         <strong>Paso 3:</strong> Ejecuta la operación cuando el temporizador llegue a 00:03s.</p>
+      <button class="btn" onclick="cerrarTour()">Entendido</button>
+      <button class="btn btn-skip" onclick="cerrarTour()">Omitir</button>
+    </div>
+  </div>
+
+  <!-- Barra Superior -->
+  <div class="header">
+    <div class="brand">⚡ QUANTUM ENGINE v2.4</div>
+    <div style="font-size: 12px; color: var(--green);">● CONECTADO</div>
+  </div>
+
+  <!-- Selector de Temporalidad -->
+  <div class="control-bar">
+    <button class="timeframe-btn active">1 MINUTO (1m)</button>
+    <button class="timeframe-btn">5 MINUTOS (5m)</button>
+  </div>
+
+  <!-- Panel Principal de Señal -->
+  <div class="card signal-container">
+    <div class="card-header">Predicción Predictiva de Vela</div>
+    <div id="signalBox" class="action-badge action-sell">🔻 VENTA CONFIRMADA (BAJADA)</div>
+    <div class="timer-display">⏱ TIEMPO PARA ACCIONAR: <span id="timer">00:42</span>s</div>
+  </div>
+
+  <!-- Módulo de Confluencia de Indicadores -->
+  <div class="card">
+    <div class="card-header">Confluencia del Algoritmo (Estudios Técnicos)</div>
+    <div class="metrics-grid">
+      <div class="metric-item"><div>Probabilidad Calculada</div><div class="metric-value">88.4%</div></div>
+      <div class="metric-item"><div>Fuerza RSI (14)</div><div class="metric-value" style="color:var(--red);">Sobrecompra (74)</div></div>
+      <div class="metric-item"><div>Cruce EMA 20/50</div><div class="metric-value" style="color:var(--red);">Bajista</div></div>
+      <div class="metric-item"><div>Patrón de Vela</div><div class="metric-value">Estrella Bañera</div></div>
+    </div>
+  </div>
+
+  <!-- Gráfico de TradingView -->
+  <div class="card">
+    <div class="card-header">Análisis Gráfico en Vivo</div>
+    <div id="chart"></div>
+  </div>
+
+  <script>
+    // Control del Tour
+    function cerrarTour() {
+      document.getElementById('tourModal').style.display = 'none';
+    }
+
+    // Inicializar Gráfico Profesional
+    const chartContainer = document.getElementById('chart');
+    const chart = LightweightCharts.createChart(chartContainer, {
+      layout: { backgroundColor: '#181a20', textColor: '#848e9c' },
+      grid: { vertLines: { color: '#2b313a' }, horzLines: { color: '#2b313a' } }
+    });
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: '#0ecb81', downColor: '#f6465d', borderUpColor: '#0ecb81', borderDownColor: '#f6465d', wickUpColor: '#0ecb81', wickDownColor: '#f6465d'
+    });
+
+    // Temporizador en tiempo real simulado
+    let timeLeft = 42;
+    setInterval(() => {
+      if(timeLeft > 0) {
+        timeLeft--;
+      } else {
+        timeLeft = 60;
+      }
+      document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`;
+    }, 1000);
+  </script>
+</body>
+</html>
