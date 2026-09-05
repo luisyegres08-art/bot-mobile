@@ -55,6 +55,18 @@
   </style>
 </head>
 <body>
+  <div style="margin: 15px 0; text-align: center;">
+    <label for="crypto-select" style="color: #fff; font-family: sans-serif; margin-right: 8px;">Seleccionar Activo:</label>
+    <select id="crypto-select" onchange="cambiarCripto(this.value)" style="padding: 8px 12px; border-radius: 6px; background: #1e222d; color: #fff; border: 1px solid #363c4e;">
+        <option value="btcusdt">Bitcoin (BTC/USDT)</option>
+        <option value="ethusdt">Ethereum (ETH/USDT)</option>
+        <option value="solusdt">Solana (SOL/USDT)</option>
+        <option value="bnbusdt">BNB (BNB/USDT)</option>
+        <option value="xrpusdt">XRP (XRP/USDT)</option>
+        <option value="dogeusdt">Dogecoin (DOGE/USDT)</option>
+        <option value="adausdt">Cardano (ADA/USDT)</option>
+    </select>
+</div>
 
   <!-- Modal de Guía / Bienvenida -->
   <div id="tourModal" class="modal-overlay">
