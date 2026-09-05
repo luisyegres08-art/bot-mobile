@@ -143,6 +143,18 @@
       }
       document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`;
     }, 1000);
+    let ws;
+let criptoActual = 'btcusdt';
+
+function cambiarCripto(nuevoSimbolo) {
+    criptoActual = nuevoSimbolo;
+    if (ws) ws.close();
+    ws = new WebSocket(`wss://stream.binance.com:9443/ws/${criptoActual}@trade`);
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log("Precio en vivo (" + criptoActual + "): " + parseFloat(data.p).toFixed(2));
+    };
+}
   </script>
 <div style="margin: 15px 0; text-align: center;">
     <label for="crypto-select" style="color: #fff; font-family: sans-serif; margin-right: 8px;">Seleccionar Activo:</label>
